@@ -44,22 +44,41 @@ export default function ScoreTable({ players, totalRounds, currentRound, dealerI
                         <span title="Dealer" className="text-xs font-bold text-accent">(D)</span>}
                     </div>
                   </TableCell>
-                  {roundHeaders.map((r, roundIndex) => (
+                  {roundHeaders.map(r => (
                     <TableCell key={r} className={cn("text-center", r === currentRound && "bg-secondary")}>
-                      {player.calls[roundIndex] !== null ? (
-                        <div>
-                          <span className="text-muted-foreground">{player.calls[roundIndex]}</span>
-                          <span> / </span>
-                          <span className={cn(
-                            player.made[roundIndex] === player.calls[roundIndex] ? 'text-green-600' : 'text-destructive'
-                          )}>
-                            {player.made[roundIndex] ?? '-'}
-                          </span>
-                           <div className="text-xs font-semibold">{player.scores[roundIndex]} pts</div>
-                        </div>
-                      ) : (
-                        '-'
-                      )}
+                       {(() => {
+                          const roundIndex = r - 1;
+                          const call = player.calls[roundIndex];
+                          const made = player.made[roundIndex];
+                          const score = player.scores[roundIndex];
+
+                          // Handle round 1 display, where score is just tricks made
+                          if (r === 1) {
+                            return made !== null ? (
+                              <div>
+                                <span className="font-semibold">{score} pts</span>
+                              </div>
+                            ) : '-';
+                          }
+
+                          // Handle rounds 2+ display
+                          if (call !== null) {
+                            return (
+                              <div>
+                                <span className="text-muted-foreground">{call}</span>
+                                <span> / </span>
+                                <span className={cn(
+                                  made === call ? 'text-green-600' : 'text-destructive'
+                                )}>
+                                  {made !== null ? made : 'Lost'}
+                                </span>
+                                <div className="text-xs font-semibold">{score} pts</div>
+                              </div>
+                            )
+                          }
+                          
+                          return '-';
+                      })()}
                     </TableCell>
                   ))}
                   <TableCell className={cn("text-center font-bold text-lg", player.totalScore > 0 && player.totalScore === winningScore && "text-accent")}>

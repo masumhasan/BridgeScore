@@ -12,10 +12,11 @@ interface GameScreenProps {
   gameState: GameState;
   setCalls: (calls: number[]) => void;
   setMade: (made: number[]) => void;
+  setOutcomes: (outcomes: ('won' | 'lost')[]) => void;
   resetGame: () => void;
 }
 
-export default function GameScreen({ gameState, setCalls, setMade, resetGame }: GameScreenProps) {
+export default function GameScreen({ gameState, setCalls, setMade, setOutcomes, resetGame }: GameScreenProps) {
   const { players, round, totalRounds, phase, tag } = gameState;
 
   const winner = useMemo(() => {
@@ -64,6 +65,7 @@ export default function GameScreen({ gameState, setCalls, setMade, resetGame }: 
               dealerIndex={gameState.dealerIndex}
               setCalls={setCalls}
               setMade={setMade}
+              setOutcomes={setOutcomes}
             />
           ) : (
             <Card className="shadow-lg animate-in fade-in">
