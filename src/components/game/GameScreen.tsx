@@ -3,7 +3,7 @@
 import type { GameState } from '@/types/game';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Spade, RotateCcw, Crown } from 'lucide-react';
+import { Spade, X, Crown } from 'lucide-react';
 import ScoreTable from './ScoreTable';
 import RoundInput from './RoundInput';
 import { useMemo } from 'react';
@@ -34,11 +34,22 @@ export default function GameScreen({ gameState, setCalls, setMade, resetGame }: 
             {tag && <p className="text-muted-foreground">{tag}</p>}
           </div>
         </div>
-        <Button onClick={resetGame} variant="outline" size="sm">
-          <RotateCcw className="mr-2 h-4 w-4" /> New Game
+        <Button onClick={resetGame} variant="destructive" size="sm">
+          <X className="mr-2 h-4 w-4" /> Close Game
         </Button>
       </header>
       
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+        {players.map(player => (
+            <Card key={player.id}>
+                <CardHeader className="p-2 md:p-4">
+                    <CardDescription>{player.name}</CardDescription>
+                    <CardTitle className="text-2xl">{player.totalScore}</CardTitle>
+                </CardHeader>
+            </Card>
+        ))}
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <ScoreTable players={players} totalRounds={totalRounds} currentRound={round} dealerIndex={gameState.dealerIndex} />

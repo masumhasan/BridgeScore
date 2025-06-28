@@ -139,9 +139,7 @@ export const useGame = () => {
   }, []);
 
   const resetGame = useCallback(() => {
-    if (window.confirm('Are you sure you want to start a new game? All progress will be lost.')) {
-      dispatch({ type: 'RESET_GAME' });
-    }
+    dispatch({ type: 'RESET_GAME' });
   }, []);
 
   return { gameState, startGame, setCalls, setMade, resetGame };

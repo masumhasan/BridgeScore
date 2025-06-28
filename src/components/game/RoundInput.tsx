@@ -31,19 +31,32 @@ export default function RoundInput({ round, phase, players, setCalls, setMade }:
     setInputs(newInputs);
   };
 
-  const { total, isValid } = useMemo(() => {
+  const { total, isValid, validationMessage } = useMemo(() => {
     const numericInputs = inputs.map(val => parseInt(val, 10)).filter(num => !isNaN(num));
     const total = numericInputs.reduce((sum, val) => sum + val, 0);
-    const isValid = total === TRICKS_PER_ROUND && numericInputs.length === players.length;
-    return { total, isValid };
-  }, [inputs, players.length]);
+    const allInputsFilled = numericInputs.length === players.length;
+
+    if (phase === 'calling') {
+      return {
+        total,
+        isValid: allInputsFilled && total >= TRICKS_PER_ROUND,
+        validationMessage: `Total calls must be 13 or more.`,
+      };
+    } else { // 'making' phase
+      return {
+        total,
+        isValid: allInputsFilled && total === TRICKS_PER_ROUND,
+        validationMessage: `Total tricks made must be exactly ${TRICKS_PER_ROUND}.`,
+      };
+    }
+  }, [inputs, players.length, phase]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isValid) {
       toast({
         title: "Invalid Input",
-        description: `Total ${phase === 'calling' ? 'calls' : 'tricks made'} must be exactly ${TRICKS_PER_ROUND}.`,
+        description: validationMessage,
         variant: "destructive",
       });
       return;
@@ -58,8 +71,8 @@ export default function RoundInput({ round, phase, players, setCalls, setMade }:
 
   const title = phase === 'calling' ? 'Make Your Calls' : 'Record Tricks Made';
   const description = phase === 'calling' 
-    ? `Each player calls how many tricks they will win.`
-    : `Enter how many tricks each player actually won.`;
+    ? `Each player calls how many tricks they will win. The total must be 13 or more.`
+    : `Enter how many tricks each player actually won. The total must be exactly 13.`;
   const buttonText = phase === 'calling' ? 'Submit Calls' : 'Finish Round';
 
   return (
@@ -96,7 +109,7 @@ export default function RoundInput({ round, phase, players, setCalls, setMade }:
                 ) : (
                   <>
                     <XCircle className="h-5 w-5 text-destructive" />
-                    <span className="text-destructive font-medium">Must total {TRICKS_PER_ROUND}</span>
+                    <span className="text-destructive font-medium">{validationMessage}</span>
                   </>
                 )}
               </div>
