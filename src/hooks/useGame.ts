@@ -7,7 +7,7 @@ const LOCAL_STORAGE_KEY = 'bridgeScore_gameState';
 const TOTAL_ROUNDS = 10;
 
 type Action =
-  | { type: 'START_GAME'; payload: { players: string[]; tag?: string } }
+  | { type: 'START_GAME'; payload: { players: string[]; winningScore: number; tag?: string } }
   | { type: 'SET_CALLS'; payload: number[] }
   | { type: 'SET_MADE'; payload: number[] }
   | { type: 'RESET_GAME' }
@@ -21,12 +21,13 @@ const getInitialState = (): GameState => ({
   phase: 'calling',
   isGameActive: false,
   totalRounds: TOTAL_ROUNDS,
+  winningScore: 50,
 });
 
 const gameReducer = (state: GameState, action: Action): GameState => {
   switch (action.type) {
     case 'START_GAME': {
-      const { players, tag } = action.payload;
+      const { players, winningScore, tag } = action.payload;
       const newPlayers: Player[] = players.map((name, index) => ({
         id: `player-${index + 1}`,
         name,
@@ -41,9 +42,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         players: newPlayers,
         round: 1,
         dealerIndex: 0,
-        phase: 'calling',
+        phase: 'making', // Round 1 starts with making tricks
         isGameActive: true,
         totalRounds: TOTAL_ROUNDS,
+        winningScore,
       };
     }
     case 'SET_CALLS': {
@@ -56,20 +58,28 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     }
     case 'SET_MADE': {
       const roundIndex = state.round - 1;
+      const isFirstRound = state.round === 1;
+      
       const updatedPlayers = state.players.map((player, i) => {
         const made = action.payload[i];
-        const call = player.calls[roundIndex];
         let roundScore = 0;
-        if (call !== null) {
-          if (call === made) {
-            // If a player wins exactly as they called, add the called number to their total score
-            roundScore = call;
-          } else if (made < call || made >= call + 2) {
-            // If a player wins fewer than called, or more than 1 over, penalize
-            roundScore = -call;
+
+        if (isFirstRound) {
+          // First round scoring: points equal tricks made
+          roundScore = made;
+        } else {
+          // Standard scoring for subsequent rounds
+          const call = player.calls[roundIndex];
+          if (call !== null) {
+            if (call === made) {
+              roundScore = call;
+            } else if (made < call || made >= call + 2) {
+              roundScore = -call;
+            }
+            // If made === call + 1, roundScore remains 0 (neutral outcome)
           }
-          // If made === call + 1, roundScore remains 0 (neutral outcome)
         }
+        
         const newScores = player.scores.map((s, r) => (r === roundIndex ? roundScore : s));
         const newMade = player.made.map((m, r) => (r === roundIndex ? made : m));
         return {
@@ -80,8 +90,11 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         };
       });
 
+      const winner = updatedPlayers.find(p => p.totalScore >= state.winningScore);
       const nextRound = state.round + 1;
-      const nextPhase: GamePhase = nextRound > state.totalRounds ? 'finished' : 'calling';
+      const isGameOver = !!winner || nextRound > state.totalRounds;
+      
+      const nextPhase: GamePhase = isGameOver ? 'finished' : 'calling';
 
       return {
         ...state,
@@ -126,8 +139,8 @@ export const useGame = () => {
     }
   }, [gameState]);
 
-  const startGame = useCallback((players: string[], tag?: string) => {
-    dispatch({ type: 'START_GAME', payload: { players, tag } });
+  const startGame = useCallback((players: string[], winningScore: number, tag?: string) => {
+    dispatch({ type: 'START_GAME', payload: { players, winningScore, tag } });
   }, []);
 
   const setCalls = useCallback((calls: number[]) => {

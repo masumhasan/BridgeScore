@@ -5,16 +5,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Spade, Users } from 'lucide-react';
+import { Spade, Users, Trophy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface NewGameFormProps {
-  startGame: (players: string[], tag?: string) => void;
+  startGame: (players: string[], winningScore: number, tag?: string) => void;
 }
 
 export default function NewGameForm({ startGame }: NewGameFormProps) {
   const [playerNames, setPlayerNames] = useState<string[]>(['', '', '', '']);
   const [tag, setTag] = useState('');
+  const [winningScore, setWinningScore] = useState('50');
   const { toast } = useToast();
 
   const handlePlayerNameChange = (index: number, name: string) => {
@@ -41,7 +42,18 @@ export default function NewGameForm({ startGame }: NewGameFormProps) {
       });
       return;
     }
-    startGame(playerNames.map(name => name.trim()), tag.trim());
+
+    const parsedWinningScore = parseInt(winningScore, 10);
+    if (isNaN(parsedWinningScore) || parsedWinningScore <= 0) {
+      toast({
+        title: "Validation Error",
+        description: "Winning score must be a positive number.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    startGame(playerNames.map(name => name.trim()), parsedWinningScore, tag.trim());
   };
 
   return (
@@ -78,6 +90,17 @@ export default function NewGameForm({ startGame }: NewGameFormProps) {
                 placeholder="e.g. Friday Night Bridge"
                 value={tag}
                 onChange={(e) => setTag(e.target.value)}
+                className="bg-white"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="winningScore" className="font-semibold flex items-center gap-2"><Trophy className="w-4 h-4" />Winning Score</Label>
+              <Input
+                id="winningScore"
+                type="number"
+                placeholder="e.g. 50"
+                value={winningScore}
+                onChange={(e) => setWinningScore(e.target.value)}
                 className="bg-white"
               />
             </div>

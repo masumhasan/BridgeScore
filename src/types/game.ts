@@ -18,4 +18,5 @@ export interface GameState {
   phase: GamePhase;
   isGameActive: boolean;
   totalRounds: number;
+  winningScore: number;
 }
