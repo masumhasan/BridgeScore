@@ -33,9 +33,10 @@ export async function getPastGames(): Promise<GameState[]> {
       const data = doc.data();
       const finishedAtTimestamp = data.finishedAt as Timestamp | null;
       games.push({
-        ...(data as Omit<GameState, 'id' | 'finishedAt'>),
+        ...(data as Omit<GameState, 'id' | 'finishedAt' | 'isGameActive'>),
         id: doc.id,
-        finishedAt: finishedAtTimestamp ? finishedAtTimestamp.toDate().toISOString() : undefined,
+        isGameActive: false,
+        finishedAt: finishedAtTimestamp ? finishedAtTimestamp.toDate().toISOString() : new Date().toISOString(),
       });
     });
     return games;

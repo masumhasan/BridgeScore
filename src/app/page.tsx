@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useGame } from '@/hooks/useGame';
+import { useAuth } from '@/context/AuthContext';
 import NewGameForm from '@/components/game/NewGameForm';
 import GameScreen from '@/components/game/GameScreen';
 import PastGamesList from '@/components/game/PastGamesList';
 import { Toaster } from '@/components/ui/toaster';
-import { Spade, PlusCircle } from 'lucide-react';
+import { Spade, PlusCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -17,9 +18,12 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { UserNav } from '@/components/auth/UserNav';
+import { LoginButton } from '@/components/auth/LoginButton';
 
 export default function Home() {
   const { gameState, ...gameActions } = useGame();
+  const { user, loading } = useAuth();
   const [isClient, setIsClient] = useState(false);
   const [isNewGameDialogOpen, setIsNewGameDialogOpen] = useState(false);
 
@@ -28,15 +32,19 @@ export default function Home() {
   }, []);
 
   const handleGameStarted = (players: string[], winningScore: number, tag?: string) => {
-    gameActions.startGame(players, winningScore, tag);
+    if (user) {
+        gameActions.startGame(players, winningScore, tag, user.uid, user.displayName, user.photoURL);
+    } else {
+        gameActions.startGame(players, winningScore, tag);
+    }
     setIsNewGameDialogOpen(false);
   };
 
-  if (!isClient) {
+  if (!isClient || loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background text-primary">
-          <Spade className="w-16 h-16 mb-4 animate-spin" />
-          <h1 className="text-2xl font-bold">BridgeScore</h1>
+          <Loader2 className="w-16 h-16 mb-4 animate-spin" />
+          <h1 className="text-2xl font-bold">Loading BridgeScore...</h1>
       </div>
     );
   }
@@ -67,13 +75,14 @@ export default function Home() {
                         Set Up New Game
                       </DialogTitle>
                       <DialogDescription>
-                        Enter player names and a winning score to begin.
+                        {user ? "Your game will be saved to your profile." : "Log in to save your game history."}
                       </DialogDescription>
                     </DialogHeader>
                     <NewGameForm startGame={handleGameStarted} />
                   </DialogContent>
                 </Dialog>
                 <ThemeToggle />
+                {user ? <UserNav /> : <LoginButton />}
               </div>
             </header>
             

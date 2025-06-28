@@ -6,7 +6,9 @@ import type { GameState } from '@/types/game';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trophy } from 'lucide-react';
+import { Trophy, User } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import Link from 'next/link';
 
 const GameHistoryCard = ({ game }: { game: GameState }) => {
     const maxScore = Math.max(...game.players.map(p => p.totalScore));
@@ -14,14 +16,23 @@ const GameHistoryCard = ({ game }: { game: GameState }) => {
     const winnerText = winners.map(w => w.name).join(' & ');
 
     return (
-        <Card className="shadow-sm">
+        <Card className="shadow-sm flex flex-col">
             <CardHeader>
+                {game.hostId && (
+                    <div className="flex items-center gap-3 mb-2 text-sm text-muted-foreground">
+                        <Avatar className="h-6 w-6">
+                            <AvatarImage src={game.hostPhotoURL ?? ''} />
+                            <AvatarFallback><User className="w-4 h-4" /></AvatarFallback>
+                        </Avatar>
+                        Hosted by <Link href={`/profile/${game.hostId}`} className="font-medium text-foreground hover:underline">{game.hostName || 'Anonymous'}</Link>
+                    </div>
+                )}
                 <CardTitle className="text-xl">{game.tag || 'Game'}</CardTitle>
                 <CardDescription>
-                    {game.finishedAt ? new Date(game.finishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    {new Date(game.finishedAt!).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                 </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-grow">
                 <div className="flex items-center gap-2 mb-4 p-2 bg-secondary rounded-md">
                     <Trophy className="w-5 h-5 text-amber-500"/>
                     <p className="font-semibold">{winners.length > 1 ? 'Winners: ' : 'Winner: '}{winnerText} ({maxScore} pts)</p>
@@ -58,10 +69,10 @@ export default function PastGamesList() {
         return (
             <div>
                 <h2 className="text-2xl font-bold mb-4">Game History</h2>
-                <div className="space-y-4">
-                    <Skeleton className="h-40 w-full rounded-lg" />
-                    <Skeleton className="h-40 w-full rounded-lg" />
-                    <Skeleton className="h-40 w-full rounded-lg" />
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <Skeleton className="h-56 w-full rounded-lg" />
+                    <Skeleton className="h-56 w-full rounded-lg" />
+                    <Skeleton className="h-56 w-full rounded-lg" />
                 </div>
             </div>
         )
@@ -70,8 +81,8 @@ export default function PastGamesList() {
     if (games.length === 0) {
         return (
             <div className="text-center py-16 bg-secondary/50 rounded-lg">
-                <h3 className="text-xl font-semibold">No Past Games</h3>
-                <p className="text-muted-foreground mt-2">Complete a game to see its results here.</p>
+                <h3 className="text-xl font-semibold">No Public Games</h3>
+                <p className="text-muted-foreground mt-2">Log in and complete a game to see its results here.</p>
             </div>
         )
     }

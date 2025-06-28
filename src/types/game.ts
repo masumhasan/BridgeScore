@@ -20,4 +20,7 @@ export interface GameState {
   totalRounds: number;
   winningScore: number;
   finishedAt?: string;
+  hostId?: string;
+  hostName?: string;
+  hostPhotoURL?: string;
 }

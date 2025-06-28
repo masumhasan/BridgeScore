@@ -8,7 +8,7 @@ const LOCAL_STORAGE_KEY = 'bridgeScore_gameState';
 const TOTAL_ROUNDS = 10;
 
 type Action =
-  | { type: 'START_GAME'; payload: { players: string[]; winningScore: number; tag?: string } }
+  | { type: 'START_GAME'; payload: { players: string[]; winningScore: number; tag?: string; hostId?: string, hostName?: string | null, hostPhotoURL?: string | null } }
   | { type: 'SET_CALLS'; payload: number[] }
   | { type: 'SET_MADE'; payload: number[] }
   | { type: 'SET_OUTCOMES'; payload: ('won' | 'lost')[] }
@@ -46,7 +46,7 @@ const finishRound = (state: GameState, updatedPlayers: Player[]): GameState => {
 const gameReducer = (state: GameState, action: Action): GameState => {
   switch (action.type) {
     case 'START_GAME': {
-      const { players, winningScore, tag } = action.payload;
+      const { players, winningScore, tag, hostId, hostName, hostPhotoURL } = action.payload;
       const newPlayers: Player[] = players.map((name, index) => ({
         id: `player-${index + 1}`,
         name,
@@ -65,6 +65,9 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         isGameActive: true,
         totalRounds: TOTAL_ROUNDS,
         winningScore,
+        hostId,
+        hostName: hostName ?? undefined,
+        hostPhotoURL: hostPhotoURL ?? undefined,
       };
     }
     case 'SET_CALLS': {
@@ -168,8 +171,8 @@ export const useGame = () => {
     if (gameState.isGameActive) {
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(gameState));
       
-      // Save to Firebase when game transitions to 'finished'
-      if (prevStateRef.current?.phase !== 'finished' && gameState.phase === 'finished') {
+      // Save to Firebase when game transitions to 'finished' and has a hostId (is not private)
+      if (prevStateRef.current?.phase !== 'finished' && gameState.phase === 'finished' && gameState.hostId) {
         saveGameResult(gameState);
       }
     } else {
@@ -180,8 +183,8 @@ export const useGame = () => {
   }, [gameState]);
 
 
-  const startGame = useCallback((players: string[], winningScore: number, tag?: string) => {
-    dispatch({ type: 'START_GAME', payload: { players, winningScore, tag } });
+  const startGame = useCallback((players: string[], winningScore: number, tag?: string, hostId?: string, hostName?: string | null, hostPhotoURL?: string | null) => {
+    dispatch({ type: 'START_GAME', payload: { players, winningScore, tag, hostId, hostName, hostPhotoURL } });
   }, []);
 
   const setCalls = useCallback((calls: number[]) => {
