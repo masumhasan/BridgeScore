@@ -58,13 +58,12 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     }
     case 'SET_MADE': {
       const roundIndex = state.round - 1;
-      const isFirstRound = state.round === 1;
       
       const updatedPlayers = state.players.map((player, i) => {
         const made = action.payload[i];
         let roundScore = 0;
 
-        if (isFirstRound) {
+        if (state.round === 1) {
           // First round scoring: points equal tricks made
           roundScore = made;
         } else {
@@ -80,8 +79,12 @@ const gameReducer = (state: GameState, action: Action): GameState => {
           }
         }
         
-        const newScores = player.scores.map((s, r) => (r === roundIndex ? roundScore : s));
-        const newMade = player.made.map((m, r) => (r === roundIndex ? made : m));
+        const newScores = [...player.scores];
+        newScores[roundIndex] = roundScore;
+
+        const newMade = [...player.made];
+        newMade[roundIndex] = made;
+        
         return {
           ...player,
           made: newMade,

@@ -37,6 +37,14 @@ export default function RoundInput({ round, phase, players, setCalls, setMade }:
     const allInputsFilled = numericInputs.length === players.length;
 
     if (phase === 'calling') {
+      const hasInvalidCall = numericInputs.some(c => c < 2);
+      if (hasInvalidCall) {
+        return {
+          total,
+          isValid: false,
+          validationMessage: 'Minimum call for any player is 2.',
+        }
+      }
       return {
         total,
         isValid: allInputsFilled && total >= TRICKS_PER_ROUND,
@@ -71,7 +79,7 @@ export default function RoundInput({ round, phase, players, setCalls, setMade }:
 
   const title = phase === 'calling' ? 'Make Your Calls' : 'Record Tricks Made';
   const description = phase === 'calling' 
-    ? `Each player calls how many tricks they will win. The total must be 13 or more.`
+    ? `Each player calls how many tricks they will win. Minimum call is 2. The total must be 13 or more.`
     : `Enter how many tricks each player actually won. The total must be exactly 13.`;
   const buttonText = phase === 'calling' ? 'Submit Calls' : 'Finish Round';
 
@@ -89,7 +97,7 @@ export default function RoundInput({ round, phase, players, setCalls, setMade }:
               <Input
                 id={`input-${player.id}`}
                 type="number"
-                min="0"
+                min={phase === 'calling' ? "2" : "0"}
                 max={TRICKS_PER_ROUND}
                 value={inputs[index]}
                 onChange={(e) => handleInputChange(index, e.target.value)}
