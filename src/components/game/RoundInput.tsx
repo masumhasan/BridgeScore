@@ -78,7 +78,7 @@ const NumericStepper = ({
         type="button"
         variant="outline"
         size="icon"
-        className="h-10 w-10 rounded-full shrink-0"
+        className="h-10 w-10 shrink-0"
         onClick={decrement}
         disabled={value !== '' && parseInt(value) <= min}
       >
@@ -88,7 +88,7 @@ const NumericStepper = ({
         type="text"
         inputMode="numeric"
         pattern="[0-9]*"
-        className="h-12 w-20 text-center text-2xl font-bold bg-transparent border-x-0 border-t-0 border-b-2 border-input rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
+        className="h-12 w-20 text-center text-2xl font-bold"
         value={value}
         onChange={handleInputChange}
         onBlur={handleBlur}
@@ -98,7 +98,7 @@ const NumericStepper = ({
         type="button"
         variant="outline"
         size="icon"
-        className="h-10 w-10 rounded-full shrink-0"
+        className="h-10 w-10 shrink-0"
         onClick={increment}
         disabled={value !== '' && parseInt(value) >= max}
       >
