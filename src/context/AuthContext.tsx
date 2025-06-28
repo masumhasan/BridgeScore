@@ -1,9 +1,9 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, type User, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, type User, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { createUserProfile } from '@/services/userService';
+import { createUserProfile, updateUserFirestoreProfile, checkUsernameUniqueness } from '@/services/userService';
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
@@ -13,6 +13,7 @@ interface AuthContextType {
     signUpWithEmail: (email:string, password:string) => Promise<any>;
     loginWithEmail: (email:string, password:string) => Promise<any>;
     logout: () => Promise<void>;
+    updateUsername: (newDisplayName: string) => Promise<{ success: boolean; message: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,8 +24,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const router = useRouter();
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            setUser(user);
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            setUser(currentUser);
             setLoading(false);
         });
         return () => unsubscribe();
@@ -37,6 +38,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             await createUserProfile(result.user);
         } catch (error) {
             console.error("Error signing in with Google: ", error);
+            throw error;
         }
     };
     
@@ -65,7 +67,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         router.push('/');
     };
 
-    const value = { user, loading, signInWithGoogle, logout, signUpWithEmail, loginWithEmail };
+    const updateUsername = async (newDisplayName: string): Promise<{ success: boolean; message: string }> => {
+        if (!auth.currentUser) {
+            return { success: false, message: "You must be logged in to update your profile." };
+        }
+        
+        try {
+            const isUnique = await checkUsernameUniqueness(newDisplayName, auth.currentUser.uid);
+            if (!isUnique) {
+                return { success: false, message: "Username is already taken. Please choose another." };
+            }
+
+            // Update Firebase Auth profile
+            await updateProfile(auth.currentUser, { displayName: newDisplayName });
+            
+            // Update Firestore profile
+            await updateUserFirestoreProfile(auth.currentUser.uid, { displayName: newDisplayName });
+            
+            // Manually trigger a refresh of the user object to reflect changes immediately.
+            setUser(auth.currentUser);
+
+            return { success: true, message: "Username updated successfully!" };
+
+        } catch (error) {
+            console.error("Error updating username: ", error);
+            const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+            return { success: false, message: errorMessage };
+        }
+    };
+
+    const value = { user, loading, signInWithGoogle, logout, signUpWithEmail, loginWithEmail, updateUsername };
 
     return (
         <AuthContext.Provider value={value}>
