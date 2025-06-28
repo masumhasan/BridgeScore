@@ -18,7 +18,7 @@ const GameHistoryCard = ({ game }: { game: GameState }) => {
             <CardHeader>
                 <CardTitle className="text-xl">{game.tag || 'Game'}</CardTitle>
                 <CardDescription>
-                    {game.finishedAt ? new Date(game.finishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Date unknown'}
+                    {game.finishedAt ? new Date(game.finishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                 </CardDescription>
             </CardHeader>
             <CardContent>
