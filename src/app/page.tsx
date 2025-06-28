@@ -16,6 +16,7 @@ import {
   DialogDescription,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function Home() {
   const { gameState, ...gameActions } = useGame();
@@ -52,25 +53,28 @@ export default function Home() {
                 <Spade className="w-8 h-8 text-primary" />
                 <h1 className="text-3xl font-bold text-primary">BridgeScore</h1>
               </div>
-              <Dialog open={isNewGameDialogOpen} onOpenChange={setIsNewGameDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                    <PlusCircle className="mr-2 h-5 w-5" />
-                    New Game
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2 text-2xl">
-                      Set Up New Game
-                    </DialogTitle>
-                    <DialogDescription>
-                      Enter player names and a winning score to begin.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <NewGameForm startGame={handleGameStarted} />
-                </DialogContent>
-              </Dialog>
+              <div className="flex items-center gap-4">
+                <Dialog open={isNewGameDialogOpen} onOpenChange={setIsNewGameDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                      <PlusCircle className="mr-2 h-5 w-5" />
+                      New Game
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2 text-2xl">
+                        Set Up New Game
+                      </DialogTitle>
+                      <DialogDescription>
+                        Enter player names and a winning score to begin.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <NewGameForm startGame={handleGameStarted} />
+                  </DialogContent>
+                </Dialog>
+                <ThemeToggle />
+              </div>
             </header>
             
             <PastGamesList />

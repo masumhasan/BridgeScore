@@ -8,6 +8,7 @@ import ScoreTable from './ScoreTable';
 import RoundInput from './RoundInput';
 import { useMemo, useState, useEffect } from 'react';
 import Confetti from 'react-confetti';
+import { ThemeToggle } from '../ThemeToggle';
 
 interface GameScreenProps {
   gameState: GameState;
@@ -61,9 +62,12 @@ export default function GameScreen({ gameState, setCalls, setMade, setOutcomes, 
             {tag && <p className="text-muted-foreground">{tag}</p>}
           </div>
         </div>
-        <Button onClick={resetGame} variant="destructive" size="sm">
-          <X className="mr-2 h-4 w-4" /> Close Game
-        </Button>
+        <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button onClick={resetGame} variant="destructive" size="sm">
+              <X className="mr-2 h-4 w-4" /> Close Game
+            </Button>
+        </div>
       </header>
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
