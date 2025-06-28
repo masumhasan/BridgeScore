@@ -60,8 +60,15 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         const made = action.payload[i];
         const call = player.calls[roundIndex];
         let roundScore = 0;
-        if (call !== null && call === made) {
-          roundScore = 10 + call;
+        if (call !== null) {
+          if (call === made) {
+            // If a player wins exactly as they called, add the called number to their total score
+            roundScore = call;
+          } else if (made < call || made >= call + 2) {
+            // If a player wins fewer than called, or more than 1 over, penalize
+            roundScore = -call;
+          }
+          // If made === call + 1, roundScore remains 0 (neutral outcome)
         }
         const newScores = player.scores.map((s, r) => (r === roundIndex ? roundScore : s));
         const newMade = player.made.map((m, r) => (r === roundIndex ? made : m));
