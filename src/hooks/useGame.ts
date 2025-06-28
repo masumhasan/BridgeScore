@@ -83,7 +83,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       
       const updatedPlayers = state.players.map((player, i) => {
         const made = action.payload[i];
-        const roundScore = made; // First round scoring: points equal tricks made
+        const roundScore = made === 8 ? 13 : made; // If 8 tricks made, score is 13. Otherwise, score is tricks made.
         
         const newScores = [...player.scores];
         newScores[roundIndex] = roundScore;
@@ -114,7 +114,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
 
           if (call !== null) {
               if (outcome === 'won') {
-                  roundScore = call;
+                  roundScore = call === 8 ? 13 : call; // If won with a call of 8, score 13.
                   madeValue = call;
               } else { // lost
                   roundScore = -call;
