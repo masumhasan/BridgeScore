@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Check, X, CheckCircle, XCircle } from 'lucide-react';
+import { Check, X, CheckCircle, XCircle, Minus, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -22,13 +22,98 @@ interface RoundInputProps {
 
 const TRICKS_PER_ROUND = 13;
 
+const NumericStepper = ({
+  value,
+  onChange,
+  min,
+  max,
+}: {
+  value: string;
+  onChange: (newValue: string) => void;
+  min: number;
+  max: number;
+}) => {
+  const handleValueChange = (newValue: number) => {
+    if (newValue >= min && newValue <= max) {
+      onChange(newValue.toString());
+    } else if (newValue < min) {
+      onChange(min.toString());
+    } else if (newValue > max) {
+      onChange(max.toString());
+    }
+  };
+
+  const increment = () => {
+    const numValue = value === '' ? min - 1 : parseInt(value, 10);
+    handleValueChange(numValue + 1);
+  };
+
+  const decrement = () => {
+    const numValue = value === '' ? min + 1 : parseInt(value, 10);
+    handleValueChange(numValue - 1);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value;
+    if (rawValue === '') {
+      onChange('');
+      return;
+    }
+    const numValue = parseInt(rawValue.replace(/[^0-9]/g, ''), 10);
+    if (!isNaN(numValue) && numValue >= 0) {
+      handleValueChange(numValue);
+    }
+  };
+  
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const numValue = parseInt(e.target.value, 10);
+    if (e.target.value !== '' && (isNaN(numValue) || numValue < min)) {
+      onChange(min.toString());
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-center gap-2">
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="h-10 w-10 rounded-full shrink-0"
+        onClick={decrement}
+        disabled={value !== '' && parseInt(value) <= min}
+      >
+        <Minus className="h-5 w-5" />
+      </Button>
+      <Input
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        className="h-12 w-20 text-center text-2xl font-bold bg-transparent border-x-0 border-t-0 border-b-2 border-input rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
+        value={value}
+        onChange={handleInputChange}
+        onBlur={handleBlur}
+        placeholder="-"
+      />
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="h-10 w-10 rounded-full shrink-0"
+        onClick={increment}
+        disabled={value !== '' && parseInt(value) >= max}
+      >
+        <Plus className="h-5 w-5" />
+      </Button>
+    </div>
+  );
+};
+
+
 export default function RoundInput({ round, phase, players, setCalls, setMade, setOutcomes }: RoundInputProps) {
   const { toast } = useToast();
   
-  // State for numeric inputs (used for calls and round 1 making)
   const [inputs, setInputs] = useState<string[]>(Array(players.length).fill(''));
   
-  // State for won/lost outcomes (used for making phase in rounds > 1)
   const [outcomes, setOutcomesState] = useState<('won' | 'lost' | null)[]>(Array(players.length).fill(null));
 
   const handleInputChange = (index: number, value: string) => {
@@ -48,7 +133,7 @@ export default function RoundInput({ round, phase, players, setCalls, setMade, s
   const { total, isValid, validationMessage } = useMemo(() => {
     const numericInputs = inputs.map(val => parseInt(val, 10)).filter(num => !isNaN(num));
     const total = numericInputs.reduce((sum, val) => sum + val, 0);
-    const allInputsFilled = numericInputs.length === players.length;
+    const allInputsFilled = inputs.every(i => i.trim() !== '');
 
     if (phase === 'calling') {
       const hasInvalidCall = numericInputs.some(c => c < 2);
@@ -123,11 +208,12 @@ export default function RoundInput({ round, phase, players, setCalls, setMade, s
   }
 
   // Fallback to numeric input for 'calling' phase and round 1 'making' phase
-  const title = phase === 'calling' ? 'Make Your Calls' : 'Record Tricks Made (Round 1)';
-  const description = phase === 'calling' 
+  const isCallingPhase = phase === 'calling';
+  const title = isCallingPhase ? 'Make Your Calls' : 'Record Tricks Made (Round 1)';
+  const description = isCallingPhase 
     ? `Each player calls how many tricks they will win. Minimum call is 2. The total must be 13 or more.`
     : `Enter how many tricks each player won. The total must be exactly 13.`;
-  const buttonText = phase === 'calling' ? 'Submit Calls' : 'Finish Round';
+  const buttonText = isCallingPhase ? 'Submit Calls' : 'Finish Round';
 
   return (
     <Card className="shadow-lg">
@@ -136,19 +222,15 @@ export default function RoundInput({ round, phase, players, setCalls, setMade, s
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <form onSubmit={handleNumericSubmit}>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3">
           {players.map((player, index) => (
-            <div key={player.id} className="grid grid-cols-3 items-center gap-4">
-              <Label htmlFor={`input-${player.id}`} className="col-span-2 truncate">{player.name}</Label>
-              <Input
-                id={`input-${player.id}`}
-                type="number"
-                min={phase === 'calling' ? "2" : "0"}
-                max={TRICKS_PER_ROUND}
+            <div key={player.id} className="flex justify-between items-center p-3 rounded-lg bg-card border">
+              <Label htmlFor={`input-${player.id}`} className="font-semibold text-base">{player.name}</Label>
+              <NumericStepper
                 value={inputs[index]}
-                onChange={(e) => handleInputChange(index, e.target.value)}
-                required
-                className="text-center"
+                onChange={(newValue) => handleInputChange(index, newValue)}
+                min={isCallingPhase ? 2 : 0}
+                max={TRICKS_PER_ROUND}
               />
             </div>
           ))}
