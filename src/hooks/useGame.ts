@@ -1,7 +1,8 @@
 "use client";
 
-import { useReducer, useEffect, useCallback } from 'react';
+import { useReducer, useEffect, useCallback, useRef } from 'react';
 import type { GameState, Player, GamePhase } from '@/types/game';
+import { saveGameResult } from '@/services/gameService';
 
 const LOCAL_STORAGE_KEY = 'bridgeScore_gameState';
 const TOTAL_ROUNDS = 10;
@@ -148,12 +149,15 @@ const gameReducer = (state: GameState, action: Action): GameState => {
 
 export const useGame = () => {
   const [gameState, dispatch] = useReducer(gameReducer, getInitialState());
+  const prevStateRef = useRef<GameState>();
 
   useEffect(() => {
     try {
       const savedState = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (savedState) {
-        dispatch({ type: 'LOAD_STATE', payload: JSON.parse(savedState) });
+        const loadedState = JSON.parse(savedState);
+        dispatch({ type: 'LOAD_STATE', payload: loadedState });
+        prevStateRef.current = loadedState;
       }
     } catch (error) {
       console.error("Failed to load game state from localStorage", error);
@@ -162,15 +166,19 @@ export const useGame = () => {
 
   useEffect(() => {
     if (gameState.isGameActive) {
-      try {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(gameState));
-      } catch (error) {
-        console.error("Failed to save game state to localStorage", error);
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(gameState));
+      
+      // Save to Firebase when game transitions to 'finished'
+      if (prevStateRef.current?.phase !== 'finished' && gameState.phase === 'finished') {
+        saveGameResult(gameState);
       }
     } else {
       localStorage.removeItem(LOCAL_STORAGE_KEY);
     }
+    // Update ref to current state for next render
+    prevStateRef.current = gameState;
   }, [gameState]);
+
 
   const startGame = useCallback((players: string[], winningScore: number, tag?: string) => {
     dispatch({ type: 'START_GAME', payload: { players, winningScore, tag } });
