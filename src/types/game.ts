@@ -19,4 +19,5 @@ export interface GameState {
   isGameActive: boolean;
   totalRounds: number;
   winningScore: number;
+  finishedAt?: string;
 }
