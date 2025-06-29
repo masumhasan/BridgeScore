@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, type User, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, signInAnonymously } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { createUserProfile, updateUserFirestoreProfile, checkUsernameUniqueness } from '@/services/userService';
 import { useRouter } from 'next/navigation';
 
@@ -73,14 +74,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const userCredential = await signInAnonymously(auth);
             const guestUser = userCredential.user;
 
-            if (!guestUser.displayName) {
+            // We need to ensure the user has a profile in Firestore and a display name in Auth
+            // for downstream functions to work correctly.
+            const userProfileRef = doc(db, 'users', guestUser.uid);
+            const userProfileSnap = await getDoc(userProfileRef);
+
+            if (!userProfileSnap.exists()) {
                 const tempName = `Guest ${Math.floor(Math.random() * 1000)}`;
+                
+                // This updates the user profile in Firebase Auth.
                 await updateProfile(guestUser, { displayName: tempName });
-                await createUserProfile(guestUser);
+
+                // This creates the corresponding user profile in Firestore.
+                // We pass the explicit values to avoid race conditions with the user object updating.
+                await setDoc(userProfileRef, {
+                    uid: guestUser.uid,
+                    email: guestUser.email,
+                    displayName: tempName,
+                    photoURL: guestUser.photoURL
+                });
             }
-            // onAuthStateChanged will handle setting the user state, but we return
-            // the user object so the calling function can use it immediately.
-            return auth.currentUser!;
+            
+            // Return the user object from the credential. It's the most up-to-date reference we have.
+            // Downstream functions can use this object immediately.
+            return guestUser;
+
         } catch (error) {
             console.error("Error signing in as guest:", error);
             throw error;
