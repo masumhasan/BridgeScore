@@ -8,8 +8,8 @@ const firebaseConfig: FirebaseOptions = {
   projectId: "bridgescore-app",
   storageBucket: "bridgescore-app.appspot.com",
   messagingSenderId: "1011165776209",
-  appId: "1:1011165776209:web:e82e723cfd377da659eb70",
-  measurementId: "G-3E242ZM778"
+  appId: "1:1011165776209:web:3b652c6cdb2474a659eb70",
+  measurementId: "G-Y0S06XLMXQ"
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
