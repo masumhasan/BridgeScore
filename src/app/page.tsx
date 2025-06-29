@@ -7,7 +7,7 @@ import NewGameForm from '@/components/game/NewGameForm';
 import GameScreen from '@/components/game/GameScreen';
 import PastGamesList from '@/components/game/PastGamesList';
 import { Toaster } from '@/components/ui/toaster';
-import { Spade, PlusCircle, Loader2 } from 'lucide-react';
+import { Spade, PlusCircle, Loader2, Gamepad2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -20,6 +20,7 @@ import {
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { UserNav } from '@/components/auth/UserNav';
 import { LoginButton } from '@/components/auth/LoginButton';
+import Link from 'next/link';
 
 export default function Home() {
   const { gameState, ...gameActions } = useGame();
@@ -64,23 +65,29 @@ export default function Home() {
               <div className="flex items-center gap-4">
                 <Dialog open={isNewGameDialogOpen} onOpenChange={setIsNewGameDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                    <Button size="lg" variant="outline">
                       <PlusCircle className="mr-2 h-5 w-5" />
-                      New Game
+                      Play Offline
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
                       <DialogTitle className="flex items-center gap-2 text-2xl">
-                        Set Up New Game
+                        Set Up Offline Game
                       </DialogTitle>
                       <DialogDescription>
-                        {user ? "Your game will be saved to your profile." : "Log in to save your game history."}
+                        {user ? "Your game will be saved to your profile upon completion." : "Log in to save your game history."}
                       </DialogDescription>
                     </DialogHeader>
                     <NewGameForm startGame={handleGameStarted} />
                   </DialogContent>
                 </Dialog>
+                 <Link href="/online">
+                  <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                    <Gamepad2 className="mr-2 h-5 w-5" />
+                    Play Online
+                  </Button>
+                </Link>
                 <ThemeToggle />
                 {user ? <UserNav /> : <LoginButton />}
               </div>
