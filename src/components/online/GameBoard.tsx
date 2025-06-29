@@ -10,6 +10,7 @@ import PlayerAvatar from './PlayerAvatar';
 import TrickArea from './TrickArea';
 import { Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 interface GameBoardProps {
     game: OnlineGame;
@@ -72,37 +73,49 @@ export default function GameBoard({ game, currentUser }: GameBoardProps) {
     }
     
     return (
-        <div className="relative flex h-screen w-screen select-none flex-col items-center justify-between bg-gray-100 dark:bg-gray-900 p-2 sm:p-4 font-sans overflow-hidden">
+        <div className="relative flex h-screen w-screen select-none flex-col items-center justify-center bg-gray-100 dark:bg-gray-900 p-2 sm:p-4 font-sans overflow-hidden">
             {/* Player Avatars */}
             {playerPositions.N && <PlayerAvatar player={playerPositions.N} position="N" isCurrentTurn={game.currentTurnSeat === playerPositions.N.seat} />}
             {playerPositions.E && <PlayerAvatar player={playerPositions.E} position="E" isCurrentTurn={game.currentTurnSeat === playerPositions.E.seat} />}
             {playerPositions.W && <PlayerAvatar player={playerPositions.W} position="W" isCurrentTurn={game.currentTurnSeat === playerPositions.W.seat} />}
             
             {/* Trick Area */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[60%] z-10">
               <TrickArea cardsOnTable={game.cardsOnTable} mySeat={mySeat} />
             </div>
 
-            {/* Current Player's Hand and Avatar */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-full flex flex-col items-center gap-4">
-                {playerPositions.S && <PlayerAvatar player={playerPositions.S} position="S" isCurrentTurn={game.currentTurnSeat === playerPositions.S.seat} />}
-                <div className={`flex justify-center items-end h-40 w-full transition-all duration-300 ${isMyTurn ? '' : 'opacity-80'}`}>
+            {/* Current Player's Area (Hand and Avatar) */}
+            <div className="absolute bottom-0 left-0 w-full h-[22rem] flex flex-col items-center justify-end p-4">
+                 {playerPositions.S && <PlayerAvatar player={playerPositions.S} position="S" isCurrentTurn={game.currentTurnSeat === playerPositions.S.seat} />}
+                
+                <div className={cn("relative w-full h-48 flex justify-center items-end transition-all duration-300", isMyTurn ? '' : 'opacity-70 scale-95')}>
                     <AnimatePresence>
                         {hand.map((card, i) => {
+                            const numCards = hand.length;
+                            const rotation = (i - (numCards - 1) / 2) * 5;
                             const isPlayable = playableCards.some(pc => pc.rank === card.rank && pc.suit === card.suit);
+                            
                             return (
                                 <motion.div 
                                      key={`${card.rank}-${card.suit}`}
-                                     initial={{ opacity: 0, y: 50 }}
-                                     animate={{ opacity: 1, y: 0, transition: { delay: i * 0.05 } }}
-                                     exit={{ opacity: 0, y: 50 }}
-                                     className={`-mx-3 sm:-mx-4 transition-transform duration-200 ${isMyTurn && isPlayable ? 'hover:-translate-y-4 cursor-pointer' : 'cursor-not-allowed'}`}
+                                     className="absolute"
+                                     initial={{ opacity: 0, y: 100 }}
+                                     animate={{ 
+                                         opacity: 1, 
+                                         y: 0, 
+                                         rotate: rotation,
+                                         x: (i - (numCards - 1) / 2) * 35,
+                                         transformOrigin: 'bottom center'
+                                    }}
+                                     exit={{ opacity: 0, y: 100, transition: { duration: 0.2 } }}
+                                     transition={{ delay: i * 0.05, type: 'spring', stiffness: 120, damping: 12 }}
+                                     whileHover={isMyTurn && isPlayable ? { y: -25, scale: 1.1, rotate: rotation, zIndex: 100 } : {}}
                                      onClick={() => isMyTurn && isPlayable && handlePlayCard(card)}
                                 >
                                     <PlayingCard
                                         card={card}
                                         isFaceUp={true}
-                                        isPlayable={isPlayable}
+                                        isPlayable={isMyTurn && isPlayable}
                                         layoutId={`${card.rank}-${card.suit}`}
                                     />
                                 </motion.div>
