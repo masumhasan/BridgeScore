@@ -51,6 +51,11 @@ export interface PlayerHand {
 
 export type OnlineGameStatus = 'waiting' | 'playing' | 'calling' | 'trick_scoring' | 'round_scoring' | 'finished';
 
+export interface PlayedCard {
+  seat: number;
+  card: Card;
+}
+
 export interface OnlineGame {
   id: string;
   hostId: string;
@@ -66,7 +71,7 @@ export interface OnlineGame {
   currentTrick: number; // 1-13
   currentTurnSeat: number;
   trickSuit: Suit | null;
-  cardsOnTable: { seat: number; card: Card }[];
+  cardsOnTable: PlayedCard[];
   lastTrickWinnerSeat?: number;
   calls: Record<string, number | null>; // { [uid]: call }
 }

@@ -1,9 +1,9 @@
 "use server";
 
 import { db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, collection, writeBatch, query, where, limit, getDocs, updateDoc, arrayUnion, runTransaction } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, writeBatch, query, where, limit, getDocs, updateDoc, arrayUnion, runTransaction, DocumentReference } from 'firebase/firestore';
 import type { User } from 'firebase/auth';
-import type { OnlineGame, OnlinePlayer, Card, Suit, Rank } from '@/types/game';
+import type { OnlineGame, OnlinePlayer, Card, Suit, Rank, PlayedCard } from '@/types/game';
 
 // --- Game Creation and Management ---
 
@@ -221,4 +221,97 @@ export async function dealCardsAndStartGame(gameId: string, hostUid: string) {
     }
     
     await batch.commit();
+}
+
+
+export async function playCard(gameId: string, userId: string, card: Card) {
+    const gameRef = doc(db, 'games', gameId);
+    const handRef = doc(db, 'games', gameId, 'private', userId);
+
+    await runTransaction(db, async (transaction) => {
+        const gameDoc = await transaction.get(gameRef);
+        const handDoc = await transaction.get(handRef);
+
+        if (!gameDoc.exists() || !handDoc.exists()) {
+            throw new Error("Game or player hand not found.");
+        }
+
+        const game = gameDoc.data() as OnlineGame;
+        const player = game.players.find(p => p.uid === userId);
+        const hand = handDoc.data()?.hand as Card[];
+
+        // --- Validation ---
+        if (!player) throw new Error("Player not found in this game.");
+        if (game.status !== 'playing') throw new Error("Not in playing phase.");
+        if (game.currentTurnSeat !== player.seat) throw new Error("Not your turn.");
+        if (!hand.some(c => c.rank === card.rank && c.suit === card.suit)) {
+            throw new Error("Card not in hand.");
+        }
+        if (game.trickSuit) {
+            const hasSuit = hand.some(c => c.suit === game.trickSuit);
+            if (hasSuit && card.suit !== game.trickSuit) {
+                throw new Error("Must follow suit if you can.");
+            }
+        }
+
+        // --- Update State ---
+        const newHand = hand.filter(c => !(c.rank === card.rank && c.suit === card.suit));
+        transaction.update(handRef, { hand: newHand });
+
+        const newCardOnTable: PlayedCard = { seat: player.seat, card };
+        const updatedCardsOnTable = [...game.cardsOnTable, newCardOnTable];
+        
+        const updates: Partial<OnlineGame> = {
+            cardsOnTable: updatedCardsOnTable,
+            currentTurnSeat: (game.currentTurnSeat + 1) % 4,
+            trickSuit: game.trickSuit || card.suit,
+        };
+
+        // --- End of Trick Logic ---
+        if (updatedCardsOnTable.length === 4) {
+            const winningCard = updatedCardsOnTable
+                .filter(c => c.card.suit === updates.trickSuit)
+                .sort((a, b) => b.card.value - a.card.value)[0];
+            
+            const winner = game.players.find(p => p.seat === winningCard.seat)!;
+            
+            updates.status = 'trick_scoring';
+            updates.lastTrickWinnerSeat = winner.seat;
+            updates.currentTurnSeat = winner.seat; // Winner leads next trick
+
+            const updatedPlayers = game.players.map(p => 
+                p.uid === winner.uid ? { ...p, tricksWon: p.tricksWon + 1 } : p
+            );
+            updates.players = updatedPlayers;
+        }
+
+        transaction.update(gameRef, updates);
+    });
+}
+
+export async function startNextTrick(gameId: string) {
+    const gameRef = doc(db, 'games', gameId);
+
+    await runTransaction(db, async (transaction) => {
+        const gameDoc = await transaction.get(gameRef);
+        if (!gameDoc.exists()) throw new Error("Game not found.");
+
+        const game = gameDoc.data() as OnlineGame;
+        if (game.status !== 'trick_scoring') return; // Avoid race conditions
+
+        const updates: Partial<OnlineGame> = {
+            status: 'playing',
+            cardsOnTable: [],
+            trickSuit: null,
+            currentTrick: game.currentTrick + 1,
+        };
+
+        // End of round logic
+        if (updates.currentTrick! > 13) {
+            updates.status = 'round_scoring';
+            // TODO: Implement round scoring logic and transition to 'calling' or 'finished'
+        }
+
+        transaction.update(gameRef, updates);
+    });
 }
