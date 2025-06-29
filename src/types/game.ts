@@ -32,7 +32,8 @@ export type Rank = '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 
 export interface Card {
   suit: Suit;
   rank: Rank;
-  value: number; // For sorting, A=14, K=13, etc.
+  value: number; // For rank sorting, A=14, K=13, etc.
+  suitValue: number; // For suit sorting
 }
 
 export interface OnlinePlayer {
@@ -40,7 +41,7 @@ export interface OnlinePlayer {
   name: string;
   photoURL: string | null;
   isBot: boolean;
-  seat: number; // 0 (North), 1 (East), 2 (South), 3 (West)
+  seat: number; // 0 (South/Me), 1 (West), 2 (North), 3 (East) from my perspective
   score: number;
   tricksWon: number;
 }

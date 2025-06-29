@@ -159,9 +159,10 @@ const createDeck = (): Card[] => {
     const suits: Suit[] = ['spades', 'hearts', 'diamonds', 'clubs'];
     const ranks: Rank[] = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
     const deck: Card[] = [];
+    const suitOrder = { spades: 4, hearts: 3, diamonds: 2, clubs: 1 };
     suits.forEach(suit => {
         ranks.forEach((rank, index) => {
-            deck.push({ suit, rank, value: index + 2 });
+            deck.push({ suit, rank, value: index + 2, suitValue: suitOrder[suit] });
         });
     });
     return deck;
@@ -193,8 +194,9 @@ export async function dealCardsAndStartGame(gameId: string, hostUid: string) {
     });
 
     for (let i = 0; i < 52; i++) {
-        const playerIndex = i % 4;
-        const playerUID = game.players[playerIndex].uid;
+        // Deal cards one by one to each player by seat order
+        const playerSeat = i % 4;
+        const playerUID = game.players.find(p => p.seat === playerSeat)!.uid;
         hands[playerUID].push(deck[i]);
     }
     
@@ -203,8 +205,13 @@ export async function dealCardsAndStartGame(gameId: string, hostUid: string) {
     // Set hands in private subcollection
     for (const player of game.players) {
         const handRef = doc(db, 'games', gameId, 'private', player.uid);
-        // Sort hand for consistent display
-        const sortedHand = hands[player.uid].sort((a,b) => b.value - a.value).sort((a,b) => a.suit.localeCompare(b.suit));
+        // Sort hand for consistent display: by suit, then by rank value
+        const sortedHand = hands[player.uid].sort((a,b) => {
+            if (a.suitValue !== b.suitValue) {
+                return b.suitValue - a.suitValue;
+            }
+            return b.value - a.value;
+        });
         batch.set(handRef, { hand: sortedHand });
     }
 
@@ -269,9 +276,20 @@ export async function playCard(gameId: string, userId: string, card: Card) {
 
         // --- End of Trick Logic ---
         if (updatedCardsOnTable.length === 4) {
-            const winningCard = updatedCardsOnTable
-                .filter(c => c.card.suit === updates.trickSuit)
-                .sort((a, b) => b.card.value - a.card.value)[0];
+            // Call Bridge rules: Spades are trump
+            const trumpCards = updatedCardsOnTable.filter(c => c.card.suit === 'spades');
+            
+            let winningCard: PlayedCard;
+
+            if (trumpCards.length > 0) {
+                // If there are trumps, the highest trump wins
+                winningCard = trumpCards.sort((a, b) => b.card.value - a.card.value)[0];
+            } else {
+                // Otherwise, the highest card of the lead suit wins
+                winningCard = updatedCardsOnTable
+                    .filter(c => c.card.suit === updates.trickSuit)
+                    .sort((a, b) => b.card.value - a.card.value)[0];
+            }
             
             const winner = game.players.find(p => p.seat === winningCard.seat)!;
             
