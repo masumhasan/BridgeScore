@@ -187,8 +187,7 @@ export async function dealCardsAndStartGame(gameId: string, hostUid: string) {
     if (game.status !== 'waiting') throw new Error("Game has already started.");
     
     const deck = shuffleDeck(createDeck());
-    const hands: Record<string, Card[]>;
-    hands = {};
+    const hands: Record<string, Card[]> = {};
     game.players.forEach(p => {
         hands[p.uid] = [];
     });
