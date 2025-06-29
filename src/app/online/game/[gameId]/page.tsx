@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useOnlineGame } from '@/hooks/useOnlineGame';
 import WaitingRoom from '@/components/online/WaitingRoom';
@@ -11,13 +11,8 @@ import { Button } from '@/components/ui/button';
 
 export default function OnlineGamePage() {
     const params = useParams();
-    const searchParams = useSearchParams();
     const gameId = params.gameId as string;
     const { user, loading: authLoading } = useAuth();
-
-    const guestUid = searchParams.get('guestUid');
-    const guestName = searchParams.get('guestName');
-    const activeUser = user || (guestUid ? { uid: guestUid, displayName: guestName || 'You', photoURL: null } : null);
     
     const { game, loading: gameLoading, error } = useOnlineGame(gameId);
     
@@ -29,14 +24,15 @@ export default function OnlineGamePage() {
         );
     }
     
-    if (!activeUser) {
+    if (!user) {
         return (
-             <div className="flex h-screen w-full items-center justify-center text-center">
+             <div className="flex h-screen w-full items-center justify-center text-center p-4">
                 <div>
                     <h2 className="text-2xl font-bold">Access Denied</h2>
-                    <p className="text-muted-foreground">You must be logged in or have a guest pass to view this game.</p>
+                    <p className="text-muted-foreground">You must be logged in to view this game.</p>
+                    <p className="text-sm text-muted-foreground mt-1">If you were playing as a guest, you may not be able to rejoin after leaving.</p>
                     <Button asChild variant="link" className="mt-4">
-                        <Link href="/login">Go to Login</Link>
+                        <Link href="/">Back to Home</Link>
                     </Button>
                 </div>
             </div>
@@ -68,8 +64,8 @@ export default function OnlineGamePage() {
 
     return (
         <div>
-            {game.status === 'waiting' && <WaitingRoom game={game} currentUser={activeUser} />}
-            {game.status !== 'waiting' && <GameBoard game={game} currentUser={activeUser} />}
+            {game.status === 'waiting' && <WaitingRoom game={game} currentUser={user} />}
+            {game.status !== 'waiting' && <GameBoard game={game} currentUser={user} />}
         </div>
     );
 }

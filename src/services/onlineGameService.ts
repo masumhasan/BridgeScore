@@ -8,7 +8,6 @@ type PlayerInfo = {
     uid: string;
     displayName: string | null;
     photoURL: string | null;
-    isGuest?: boolean;
 };
 
 // --- Game Creation and Management ---
@@ -60,7 +59,7 @@ export async function createGameWithBots(host: PlayerInfo): Promise<string> {
         uid: host.uid,
         name: host.displayName || 'Anonymous',
         photoURL: host.photoURL,
-        isBot: !!host.isGuest,
+        isBot: false,
         seat: 0,
         score: 0,
         tricksWon: 0,

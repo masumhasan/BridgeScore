@@ -1,8 +1,8 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, type User, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, type User, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, signInAnonymously } from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
 import { createUserProfile, updateUserFirestoreProfile, checkUsernameUniqueness } from '@/services/userService';
 import { useRouter } from 'next/navigation';
 
@@ -14,6 +14,7 @@ interface AuthContextType {
     loginWithEmail: (email:string, password:string) => Promise<any>;
     logout: () => Promise<void>;
     updateUsername: (newDisplayName: string) => Promise<{ success: boolean; message: string }>;
+    signInAsGuest: () => Promise<User>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -66,6 +67,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await signOut(auth);
         router.push('/');
     };
+    
+    const signInAsGuest = async (): Promise<User> => {
+        try {
+            const userCredential = await signInAnonymously(auth);
+            const guestUser = userCredential.user;
+
+            if (!guestUser.displayName) {
+                const tempName = `Guest ${Math.floor(Math.random() * 1000)}`;
+                await updateProfile(guestUser, { displayName: tempName });
+                await createUserProfile(guestUser);
+            }
+            // onAuthStateChanged will handle setting the user state, but we return
+            // the user object so the calling function can use it immediately.
+            return auth.currentUser!;
+        } catch (error) {
+            console.error("Error signing in as guest:", error);
+            throw error;
+        }
+    };
 
     const updateUsername = async (newDisplayName: string): Promise<{ success: boolean; message: string }> => {
         if (!auth.currentUser) {
@@ -96,7 +116,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const value = { user, loading, signInWithGoogle, logout, signUpWithEmail, loginWithEmail, updateUsername };
+    const value = { user, loading, signInWithGoogle, logout, signUpWithEmail, loginWithEmail, updateUsername, signInAsGuest };
 
     return (
         <AuthContext.Provider value={value}>

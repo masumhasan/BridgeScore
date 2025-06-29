@@ -28,7 +28,7 @@ import { createGameWithBots } from '@/services/onlineGameService';
 
 export default function Home() {
   const { gameState, ...gameActions } = useGame();
-  const { user, loading } = useAuth();
+  const { user, loading, signInAsGuest } = useAuth();
   const [isClient, setIsClient] = useState(false);
   const [isNewGameDialogOpen, setIsNewGameDialogOpen] = useState(false);
   const router = useRouter();
@@ -51,24 +51,13 @@ export default function Home() {
   const handleStartBotGame = async () => {
     setIsStartingBotGame(true);
     try {
-        const playerForGame = user || {
-          uid: `guest_${Date.now()}`,
-          displayName: 'You',
-          photoURL: null,
-          isGuest: true, 
-        };
+        let playerForGame = user;
+        if (!playerForGame) {
+            playerForGame = await signInAsGuest();
+        }
 
         const gameId = await createGameWithBots(playerForGame);
-
-        if ('isGuest' in playerForGame && playerForGame.isGuest) {
-            const query = new URLSearchParams({
-                guestUid: playerForGame.uid,
-                guestName: playerForGame.displayName || 'You'
-            }).toString();
-            router.push(`/online/game/${gameId}?${query}`);
-        } else {
-            router.push(`/online/game/${gameId}`);
-        }
+        router.push(`/online/game/${gameId}`);
 
     } catch (error) {
       console.error(error);
