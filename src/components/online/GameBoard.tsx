@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useEffect } from 'react';
-import type { User } from 'firebase/auth';
 import type { OnlineGame, Card } from '@/types/game';
 import { usePlayerHand } from '@/hooks/usePlayerHand';
 import { playCard, startNextTrick } from '@/services/onlineGameService';
@@ -14,7 +13,11 @@ import { cn } from '@/lib/utils';
 
 interface GameBoardProps {
     game: OnlineGame;
-    currentUser: User;
+    currentUser: {
+        uid: string;
+        displayName: string | null;
+        photoURL: string | null;
+    };
 }
 
 export default function GameBoard({ game, currentUser }: GameBoardProps) {

@@ -1,13 +1,19 @@
 "use server";
 
 import { db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, collection, writeBatch, query, where, limit, getDocs, updateDoc, arrayUnion, runTransaction, DocumentReference } from 'firebase/firestore';
-import type { User } from 'firebase/auth';
+import { doc, setDoc, getDoc, collection, writeBatch, query, where, limit, getDocs, updateDoc, arrayUnion, runTransaction, type DocumentReference } from 'firebase/firestore';
 import type { OnlineGame, OnlinePlayer, Card, Suit, Rank, PlayedCard } from '@/types/game';
+
+type PlayerInfo = {
+    uid: string;
+    displayName: string | null;
+    photoURL: string | null;
+    isGuest?: boolean;
+};
 
 // --- Game Creation and Management ---
 
-export async function createGame(host: User, isPrivate: boolean): Promise<string> {
+export async function createGame(host: PlayerInfo, isPrivate: boolean): Promise<string> {
     const gameRef = doc(collection(db, 'games'));
 
     const hostPlayer: OnlinePlayer = {
@@ -47,14 +53,14 @@ export async function createGame(host: User, isPrivate: boolean): Promise<string
     return gameRef.id;
 }
 
-export async function createGameWithBots(host: User): Promise<string> {
+export async function createGameWithBots(host: PlayerInfo): Promise<string> {
     const gameRef = doc(collection(db, 'games'));
 
     const hostPlayer: OnlinePlayer = {
         uid: host.uid,
         name: host.displayName || 'Anonymous',
         photoURL: host.photoURL,
-        isBot: false,
+        isBot: !!host.isGuest,
         seat: 0,
         score: 0,
         tricksWon: 0,
@@ -88,7 +94,7 @@ export async function createGameWithBots(host: User): Promise<string> {
     return gameRef.id;
 }
 
-export async function findAndJoinPublicGame(user: User): Promise<string> {
+export async function findAndJoinPublicGame(user: PlayerInfo): Promise<string> {
     const lobbyQuery = query(collection(db, 'lobby'), where('playerCount', '<', 4), limit(1));
     const lobbySnapshot = await getDocs(lobbyQuery);
 
@@ -105,7 +111,7 @@ export async function findAndJoinPublicGame(user: User): Promise<string> {
 }
 
 
-export async function joinGame(gameId: string, user: User): Promise<void> {
+export async function joinGame(gameId: string, user: PlayerInfo): Promise<void> {
     const gameRef = doc(db, 'games', gameId);
 
     try {

@@ -49,22 +49,32 @@ export default function Home() {
   };
   
   const handleStartBotGame = async () => {
-    if (!user) {
-      toast({
-        title: "Login Required",
-        description: "Please log in to play a game with bots.",
-        variant: "destructive",
-      });
-      return;
-    }
     setIsStartingBotGame(true);
     try {
-      const gameId = await createGameWithBots(user);
-      router.push(`/online/game/${gameId}`);
+        const playerForGame = user || {
+          uid: `guest_${Date.now()}`,
+          displayName: 'You',
+          photoURL: null,
+          isGuest: true, 
+        };
+
+        const gameId = await createGameWithBots(playerForGame);
+
+        if ('isGuest' in playerForGame && playerForGame.isGuest) {
+            const query = new URLSearchParams({
+                guestUid: playerForGame.uid,
+                guestName: playerForGame.displayName || 'You'
+            }).toString();
+            router.push(`/online/game/${gameId}?${query}`);
+        } else {
+            router.push(`/online/game/${gameId}`);
+        }
+
     } catch (error) {
       console.error(error);
       toast({ title: "Error", description: "Could not create bot game.", variant: "destructive" });
-      setIsStartingBotGame(false);
+    } finally {
+        setIsStartingBotGame(false);
     }
   };
 

@@ -11,11 +11,9 @@ export const useOnlineGame = (gameId: string) => {
     const [game, setGame] = useState<OnlineGame | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const { user } = useAuth();
 
     useEffect(() => {
-        if (!gameId || !user) {
-            if (!user) setError("You must be logged in.");
+        if (!gameId) {
             setLoading(false);
             return;
         };
@@ -25,20 +23,6 @@ export const useOnlineGame = (gameId: string) => {
         const unsubscribe = onSnapshot(gameRef, async (docSnap) => {
             if (docSnap.exists()) {
                 const gameData = { id: docSnap.id, ...docSnap.data() } as OnlineGame;
-                
-                // If user is not in the player list and there's space, try to join
-                const isPlayer = gameData.players.some(p => p.uid === user.uid);
-                if (!isPlayer && gameData.players.length < 4 && gameData.status === 'waiting') {
-                    try {
-                        await joinGame(gameId, user);
-                        // The snapshot listener will pick up the change, no need to set state here
-                    } catch (e) {
-                         setError("Could not join game. It might be full or already started.");
-                    }
-                } else if (!isPlayer) {
-                    setError("You are not a player in this game and it is full or has already started.");
-                }
-
                 setGame(gameData);
                 setError(null);
             } else {
@@ -53,7 +37,7 @@ export const useOnlineGame = (gameId: string) => {
         });
 
         return () => unsubscribe();
-    }, [gameId, user]);
+    }, [gameId]);
 
     return { game, loading, error };
 };

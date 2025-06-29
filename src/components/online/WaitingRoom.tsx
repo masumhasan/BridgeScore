@@ -1,6 +1,5 @@
 "use client";
 
-import type { User } from 'firebase/auth';
 import type { OnlineGame } from '@/types/game';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,7 +11,11 @@ import { dealCardsAndStartGame } from '@/services/onlineGameService';
 
 interface WaitingRoomProps {
     game: OnlineGame;
-    currentUser: User;
+    currentUser: {
+        uid: string;
+        displayName: string | null;
+        photoURL: string | null;
+    };
 }
 
 const PlayerSlot = ({ player }: { player?: OnlineGame['players'][0] }) => {
