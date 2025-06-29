@@ -7,7 +7,7 @@ const firebaseConfig: FirebaseOptions = {
   authDomain: "bridgescore-app.firebaseapp.com",
   databaseURL: "https://bridgescore-app-default-rtdb.firebaseio.com",
   projectId: "bridgescore-app",
-  storageBucket: "bridgescore-app.firebasestorage.app",
+  storageBucket: "bridgescore-app.appspot.com",
   messagingSenderId: "1011165776209",
   appId: "1:1011165776209:web:a3d46c6f0f5c4bca59eb70",
   measurementId: "G-D42JPN6307"
