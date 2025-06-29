@@ -22,12 +22,18 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { UserNav } from '@/components/auth/UserNav';
 import { LoginButton } from '@/components/auth/LoginButton';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
+import { createGameWithBots } from '@/services/onlineGameService';
 
 export default function Home() {
   const { gameState, ...gameActions } = useGame();
   const { user, loading } = useAuth();
   const [isClient, setIsClient] = useState(false);
   const [isNewGameDialogOpen, setIsNewGameDialogOpen] = useState(false);
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isStartingBotGame, setIsStartingBotGame] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -42,16 +48,23 @@ export default function Home() {
     setIsNewGameDialogOpen(false);
   };
   
-  const handleStartBotGame = () => {
-    const humanPlayerName = user?.displayName || 'You';
-    const players = [humanPlayerName, 'Bot Alpha', 'Bot Bravo', 'Bot Charlie'];
-    const winningScore = 50; // Default winning score
-    const tag = "Offline Bot Match";
-
-    if (user) {
-        gameActions.startGame(players, winningScore, tag, user.uid, user.displayName, user.photoURL);
-    } else {
-        gameActions.startGame(players, winningScore, tag);
+  const handleStartBotGame = async () => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to play a game with bots.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setIsStartingBotGame(true);
+    try {
+      const gameId = await createGameWithBots(user);
+      router.push(`/online/game/${gameId}`);
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Error", description: "Could not create bot game.", variant: "destructive" });
+      setIsStartingBotGame(false);
     }
   };
 
@@ -96,8 +109,8 @@ export default function Home() {
                     <NewGameForm startGame={handleGameStarted} />
                   </DialogContent>
                 </Dialog>
-                <Button size="lg" variant="outline" onClick={handleStartBotGame}>
-                    <Bot className="mr-2 h-5 w-5" />
+                <Button size="lg" variant="outline" onClick={handleStartBotGame} disabled={isStartingBotGame}>
+                    {isStartingBotGame ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Bot className="mr-2 h-5 w-5" />}
                     Play with Bots
                 </Button>
                  <Link href="/online">
