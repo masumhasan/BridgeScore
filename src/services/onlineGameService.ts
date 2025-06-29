@@ -9,6 +9,28 @@ type PlayerInfo = {
     photoURL: string | null;
 };
 
+const createDeck = (): Card[] => {
+    const suits: Suit[] = ['spades', 'hearts', 'diamonds', 'clubs'];
+    const ranks: Rank[] = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+    const deck: Card[] = [];
+    const suitOrder = { spades: 4, hearts: 3, diamonds: 2, clubs: 1 };
+    suits.forEach(suit => {
+        ranks.forEach((rank, index) => {
+            deck.push({ suit, rank, value: index + 2, suitValue: suitOrder[suit] });
+        });
+    });
+    return deck;
+};
+
+const shuffleDeck = (deck: Card[]): Card[] => {
+    for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+    return deck;
+};
+
+
 // --- Game Creation and Management ---
 
 export async function createGame(host: PlayerInfo, isPrivate: boolean): Promise<string> {
@@ -53,10 +75,11 @@ export async function createGame(host: PlayerInfo, isPrivate: boolean): Promise<
 
 export async function createGameWithBots(host: PlayerInfo): Promise<string> {
     const gameRef = doc(collection(db, 'games'));
+    const batch = writeBatch(db);
 
     const hostPlayer: OnlinePlayer = {
         uid: host.uid,
-        name: host.displayName || 'Anonymous',
+        name: host.displayName || `Guest ${Math.floor(Math.random() * 1000)}`,
         photoURL: host.photoURL,
         isBot: false,
         seat: 0,
@@ -69,25 +92,55 @@ export async function createGameWithBots(host: PlayerInfo): Promise<string> {
         { uid: 'bot-2', name: 'Bot Bravo', photoURL: null, isBot: true, seat: 2, score: 0, tricksWon: 0 },
         { uid: 'bot-3', name: 'Bot Charlie', photoURL: null, isBot: true, seat: 3, score: 0, tricksWon: 0 },
     ];
+    
+    const allPlayers = [hostPlayer, ...botPlayers];
 
+    // --- Deal cards ---
+    const deck = shuffleDeck(createDeck());
+    const hands: Record<string, Card[]> = {};
+    allPlayers.forEach(p => {
+        hands[p.uid] = [];
+    });
+
+    for (let i = 0; i < 52; i++) {
+        const playerSeat = i % 4;
+        const playerUID = allPlayers.find(p => p.seat === playerSeat)!.uid;
+        hands[playerUID].push(deck[i]);
+    }
+
+    // Set hands in private subcollection
+    for (const player of allPlayers) {
+        const handRef = doc(db, 'games', gameRef.id, 'private', player.uid);
+        const sortedHand = hands[player.uid].sort((a,b) => {
+            if (a.suitValue !== b.suitValue) {
+                return b.suitValue - a.suitValue;
+            }
+            return b.value - a.value;
+        });
+        batch.set(handRef, { hand: sortedHand });
+    }
+
+    // --- Create Game Object ---
     const newGame: OnlineGame = {
         id: gameRef.id,
         hostId: host.uid,
-        status: 'waiting',
-        players: [hostPlayer, ...botPlayers],
+        status: 'playing', // Start playing immediately
+        players: allPlayers,
         settings: {
-            isPrivate: true, // Bot games are always private
+            isPrivate: true,
             winningScore: 50,
         },
         currentRound: 1,
         currentTrick: 1,
-        currentTurnSeat: 0,
+        currentTurnSeat: 0, // Host starts
         trickSuit: null,
         cardsOnTable: [],
         calls: {},
     };
 
-    await setDoc(gameRef, newGame);
+    batch.set(gameRef, newGame);
+    
+    await batch.commit();
 
     return gameRef.id;
 }
@@ -158,27 +211,6 @@ export async function joinGame(gameId: string, user: PlayerInfo): Promise<void> 
 
 
 // --- Gameplay Actions ---
-
-const createDeck = (): Card[] => {
-    const suits: Suit[] = ['spades', 'hearts', 'diamonds', 'clubs'];
-    const ranks: Rank[] = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
-    const deck: Card[] = [];
-    const suitOrder = { spades: 4, hearts: 3, diamonds: 2, clubs: 1 };
-    suits.forEach(suit => {
-        ranks.forEach((rank, index) => {
-            deck.push({ suit, rank, value: index + 2, suitValue: suitOrder[suit] });
-        });
-    });
-    return deck;
-};
-
-const shuffleDeck = (deck: Card[]): Card[] => {
-    for (let i = deck.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [deck[i], deck[j]] = [deck[j], deck[i]];
-    }
-    return deck;
-};
 
 export async function dealCardsAndStartGame(gameId: string, hostUid: string) {
     const gameRef = doc(db, 'games', gameId);
