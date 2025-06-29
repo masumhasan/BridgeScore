@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -7,7 +8,7 @@ import NewGameForm from '@/components/game/NewGameForm';
 import GameScreen from '@/components/game/GameScreen';
 import PastGamesList from '@/components/game/PastGamesList';
 import { Toaster } from '@/components/ui/toaster';
-import { Spade, PlusCircle, Loader2, Gamepad2 } from 'lucide-react';
+import { Spade, PlusCircle, Loader2, Gamepad2, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -40,6 +41,19 @@ export default function Home() {
     }
     setIsNewGameDialogOpen(false);
   };
+  
+  const handleStartBotGame = () => {
+    const humanPlayerName = user?.displayName || 'You';
+    const players = [humanPlayerName, 'Bot Alpha', 'Bot Bravo', 'Bot Charlie'];
+    const winningScore = 50; // Default winning score
+    const tag = "Offline Bot Match";
+
+    if (user) {
+        gameActions.startGame(players, winningScore, tag, user.uid, user.displayName, user.photoURL);
+    } else {
+        gameActions.startGame(players, winningScore, tag);
+    }
+  };
 
   if (!isClient || loading) {
     return (
@@ -67,7 +81,7 @@ export default function Home() {
                   <DialogTrigger asChild>
                     <Button size="lg" variant="outline">
                       <PlusCircle className="mr-2 h-5 w-5" />
-                      Play Offline
+                      New Offline Game
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[425px]">
@@ -82,6 +96,10 @@ export default function Home() {
                     <NewGameForm startGame={handleGameStarted} />
                   </DialogContent>
                 </Dialog>
+                <Button size="lg" variant="outline" onClick={handleStartBotGame}>
+                    <Bot className="mr-2 h-5 w-5" />
+                    Play with Bots
+                </Button>
                  <Link href="/online">
                   <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
                     <Gamepad2 className="mr-2 h-5 w-5" />
