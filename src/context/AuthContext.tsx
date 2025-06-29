@@ -2,7 +2,8 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, type User, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, signInAnonymously } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
+import { app, auth, db } from '@/lib/firebase';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { createUserProfile, updateUserFirestoreProfile, checkUsernameUniqueness } from '@/services/userService';
 import { useRouter } from 'next/navigation';
@@ -26,6 +27,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const router = useRouter();
 
     useEffect(() => {
+        if (typeof window !== 'undefined') {
+            try {
+                initializeAppCheck(app, {
+                    provider: new ReCaptchaV3Provider('6LfJlHErAAAAAA_G-5_kCMD4jtLUiGrBV_WUbVnu'),
+                    isTokenAutoRefreshEnabled: true
+                });
+            } catch (e) {
+                console.error("Failed to initialize App Check", e);
+            }
+        }
+
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
             setLoading(false);
