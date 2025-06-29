@@ -47,6 +47,47 @@ export async function createGame(host: User, isPrivate: boolean): Promise<string
     return gameRef.id;
 }
 
+export async function createGameWithBots(host: User): Promise<string> {
+    const gameRef = doc(collection(db, 'games'));
+
+    const hostPlayer: OnlinePlayer = {
+        uid: host.uid,
+        name: host.displayName || 'Anonymous',
+        photoURL: host.photoURL,
+        isBot: false,
+        seat: 0,
+        score: 0,
+        tricksWon: 0,
+    };
+
+    const botPlayers: OnlinePlayer[] = [
+        { uid: 'bot-1', name: 'Bot Alpha', photoURL: null, isBot: true, seat: 1, score: 0, tricksWon: 0 },
+        { uid: 'bot-2', name: 'Bot Bravo', photoURL: null, isBot: true, seat: 2, score: 0, tricksWon: 0 },
+        { uid: 'bot-3', name: 'Bot Charlie', photoURL: null, isBot: true, seat: 3, score: 0, tricksWon: 0 },
+    ];
+
+    const newGame: OnlineGame = {
+        id: gameRef.id,
+        hostId: host.uid,
+        status: 'waiting',
+        players: [hostPlayer, ...botPlayers],
+        settings: {
+            isPrivate: true, // Bot games are always private
+            winningScore: 50,
+        },
+        currentRound: 1,
+        currentTrick: 1,
+        currentTurnSeat: 0,
+        trickSuit: null,
+        cardsOnTable: [],
+        calls: {},
+    };
+
+    await setDoc(gameRef, newGame);
+
+    return gameRef.id;
+}
+
 export async function findAndJoinPublicGame(user: User): Promise<string> {
     const lobbyQuery = query(collection(db, 'lobby'), where('playerCount', '<', 4), limit(1));
     const lobbySnapshot = await getDocs(lobbyQuery);
@@ -146,7 +187,8 @@ export async function dealCardsAndStartGame(gameId: string, hostUid: string) {
     if (game.status !== 'waiting') throw new Error("Game has already started.");
     
     const deck = shuffleDeck(createDeck());
-    const hands: Record<string, Card[]> = {};
+    const hands: Record<string, Card[]>;
+    hands = {};
     game.players.forEach(p => {
         hands[p.uid] = [];
     });

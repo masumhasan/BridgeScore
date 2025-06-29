@@ -6,16 +6,16 @@ import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Lock, Globe, VenetianMask } from 'lucide-react';
+import { Loader2, Lock, Globe, VenetianMask, Bot } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { createGame, findAndJoinPublicGame } from '@/services/onlineGameService';
+import { createGame, findAndJoinPublicGame, createGameWithBots } from '@/services/onlineGameService';
 
 export default function OnlineLobbyPage() {
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
     const [joinCode, setJoinCode] = useState('');
-    const [isLoading, setIsLoading] = useState<null | 'create' | 'public' | 'join'>(null);
+    const [isLoading, setIsLoading] = useState<null | 'create' | 'public' | 'join' | 'bots'>(null);
 
     const handleCreateGame = async (isPrivate: boolean) => {
         if (!user) {
@@ -29,6 +29,22 @@ export default function OnlineLobbyPage() {
         } catch (error) {
             console.error(error);
             toast({ title: "Error", description: "Could not create game.", variant: "destructive" });
+            setIsLoading(null);
+        }
+    };
+
+    const handleCreateBotGame = async () => {
+        if (!user) {
+            toast({ title: "Please log in", description: "You must be logged in to create a game.", variant: "destructive" });
+            return;
+        }
+        setIsLoading('bots');
+        try {
+            const gameId = await createGameWithBots(user);
+            router.push(`/online/game/${gameId}`);
+        } catch (error) {
+            console.error(error);
+            toast({ title: "Error", description: "Could not create bot game.", variant: "destructive" });
             setIsLoading(null);
         }
     };
@@ -96,7 +112,7 @@ export default function OnlineLobbyPage() {
                     <Card>
                         <CardHeader>
                             <CardTitle>Create a Game</CardTitle>
-                            <CardDescription>Start a new game and invite your friends.</CardDescription>
+                            <CardDescription>Start a new game with friends or play against bots.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <Button className="w-full" onClick={() => handleCreateGame(true)} disabled={!!isLoading}>
@@ -106,6 +122,10 @@ export default function OnlineLobbyPage() {
                              <Button className="w-full" variant="secondary" onClick={() => handleCreateGame(false)} disabled={!!isLoading}>
                                 {isLoading === 'create' ? <Loader2 className="animate-spin"/> : <Globe />}
                                 Create Public Game
+                            </Button>
+                            <Button className="w-full" variant="outline" onClick={handleCreateBotGame} disabled={!!isLoading}>
+                                {isLoading === 'bots' ? <Loader2 className="animate-spin" /> : <Bot />}
+                                Play with Bots
                             </Button>
                         </CardContent>
                     </Card>

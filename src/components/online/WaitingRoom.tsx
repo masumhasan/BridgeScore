@@ -5,7 +5,7 @@ import type { OnlineGame } from '@/types/game';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User as UserIcon, Copy, Check, Loader2 } from 'lucide-react';
+import { User as UserIcon, Copy, Check, Loader2, Bot } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { dealCardsAndStartGame } from '@/services/onlineGameService';
@@ -20,10 +20,15 @@ const PlayerSlot = ({ player }: { player?: OnlineGame['players'][0] }) => {
         <div className="flex flex-col items-center gap-2 p-4 border rounded-lg bg-secondary/50 h-32 justify-center">
             {player ? (
                  <>
-                    <Avatar>
-                        <AvatarImage src={player.photoURL ?? ''} />
-                        <AvatarFallback>{player.name.charAt(0).toUpperCase()}</AvatarFallback>
-                    </Avatar>
+                    <div className="relative">
+                        <Avatar>
+                            <AvatarImage src={player.photoURL ?? ''} />
+                            <AvatarFallback>{player.name.charAt(0).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        {player.isBot && (
+                            <Bot className="absolute -bottom-1 -right-1 h-5 w-5 bg-card text-card-foreground rounded-full p-0.5 border" />
+                        )}
+                    </div>
                     <span className="font-medium text-center truncate w-full">{player.name}</span>
                 </>
             ) : (

@@ -3,6 +3,7 @@
 import type { User } from 'firebase/auth';
 import type { OnlineGame } from '@/types/game';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Bot } from 'lucide-react';
 
 interface GameBoardProps {
     game: OnlineGame;
@@ -29,7 +30,11 @@ export default function GameBoard({ game, currentUser }: GameBoardProps) {
                         <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
                             {game.players.map(p => (
                                 <div key={p.uid} className="p-4 border rounded-lg">
-                                    <p className="font-bold">{p.name} {p.uid === currentUser.uid && "(You)"}</p>
+                                    <p className="font-bold flex items-center justify-center gap-1.5">
+                                        {p.isBot && <Bot className="h-5 w-5" />}
+                                        {p.name}
+                                        {p.uid === currentUser.uid && "(You)"}
+                                    </p>
                                     <p>Score: {p.score}</p>
                                 </div>
                             ))}
