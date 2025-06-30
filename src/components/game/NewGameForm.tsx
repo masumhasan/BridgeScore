@@ -67,7 +67,6 @@ export default function NewGameForm({ startGame }: NewGameFormProps) {
               value={name}
               onChange={(e) => handlePlayerNameChange(index, e.target.value)}
               required
-              className="bg-white"
             />
           ))}
         </div>
@@ -79,7 +78,6 @@ export default function NewGameForm({ startGame }: NewGameFormProps) {
             placeholder="e.g. Friday Night Bridge"
             value={tag}
             onChange={(e) => setTag(e.target.value)}
-            className="bg-white"
           />
         </div>
         <div className="space-y-2">
@@ -90,7 +88,6 @@ export default function NewGameForm({ startGame }: NewGameFormProps) {
             placeholder="e.g. 50"
             value={winningScore}
             onChange={(e) => setWinningScore(e.target.value)}
-            className="bg-white"
           />
         </div>
         <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
