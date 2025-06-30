@@ -6,8 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Spade, X, Crown } from 'lucide-react';
 import ScoreTable from './ScoreTable';
 import RoundInput from './RoundInput';
-import { useMemo, useState, useEffect } from 'react';
-import Confetti from 'react-confetti';
+import { useMemo } from 'react';
 import { ThemeToggle } from '../ThemeToggle';
 
 interface GameScreenProps {
@@ -20,22 +19,6 @@ interface GameScreenProps {
 
 export default function GameScreen({ gameState, setCalls, setMade, setOutcomes, resetGame }: GameScreenProps) {
   const { players, round, totalRounds, phase, tag } = gameState;
-  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
-
-    useEffect(() => {
-        const handleResize = () => {
-          setWindowSize({
-            width: window.innerWidth,
-            height: window.innerHeight,
-          });
-        };
-        
-        handleResize();
-        
-        window.addEventListener('resize', handleResize);
-        
-        return () => window.removeEventListener('resize', handleResize);
-      }, []);
 
   const winner = useMemo(() => {
     if (phase !== 'finished') return null;
@@ -45,15 +28,6 @@ export default function GameScreen({ gameState, setCalls, setMade, setOutcomes, 
 
   return (
     <div className="space-y-6">
-      {phase === 'finished' && windowSize.width > 0 && (
-          <Confetti
-              width={windowSize.width}
-              height={windowSize.height}
-              recycle={false}
-              numberOfPieces={500}
-              tweenDuration={10000}
-          />
-      )}
       <header className="flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="flex items-center gap-3">
           <Spade className="w-8 h-8 text-primary" />

@@ -1,14 +1,11 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
 import { useGame } from '@/hooks/useGame';
-import { useAuth } from '@/context/AuthContext';
 import NewGameForm from '@/components/game/NewGameForm';
 import GameScreen from '@/components/game/GameScreen';
-import PastGamesList from '@/components/game/PastGamesList';
 import { Toaster } from '@/components/ui/toaster';
-import { Spade, PlusCircle, Loader2, Gamepad2, Bot } from 'lucide-react';
+import { Spade, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -19,58 +16,25 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { UserNav } from '@/components/auth/UserNav';
-import { LoginButton } from '@/components/auth/LoginButton';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useToast } from '@/hooks/use-toast';
-import { createGameWithBots } from '@/services/onlineGameService';
 
 export default function Home() {
   const { gameState, ...gameActions } = useGame();
-  const { user, loading, signInAsGuest } = useAuth();
   const [isClient, setIsClient] = useState(false);
   const [isNewGameDialogOpen, setIsNewGameDialogOpen] = useState(false);
-  const router = useRouter();
-  const { toast } = useToast();
-  const [isStartingBotGame, setIsStartingBotGame] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
   const handleGameStarted = (players: string[], winningScore: number, tag?: string) => {
-    if (user) {
-        gameActions.startGame(players, winningScore, tag, user.uid, user.displayName, user.photoURL);
-    } else {
-        gameActions.startGame(players, winningScore, tag);
-    }
+    gameActions.startGame(players, winningScore, tag);
     setIsNewGameDialogOpen(false);
   };
   
-  const handleStartBotGame = async () => {
-    setIsStartingBotGame(true);
-    try {
-        let playerForGame = user;
-        if (!playerForGame) {
-            playerForGame = await signInAsGuest();
-        }
-
-        const gameId = await createGameWithBots(playerForGame);
-        router.push(`/online/game/${gameId}`);
-
-    } catch (error) {
-      console.error(error);
-      toast({ title: "Error", description: "Could not create bot game.", variant: "destructive" });
-    } finally {
-        setIsStartingBotGame(false);
-    }
-  };
-
-  if (!isClient || loading) {
+  if (!isClient) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background text-primary">
-          <Loader2 className="w-16 h-16 mb-4 animate-spin" />
+          <Spade className="w-16 h-16 mb-4 animate-pulse" />
           <h1 className="text-2xl font-bold">Loading BridgeScore...</h1>
       </div>
     );
@@ -91,39 +55,35 @@ export default function Home() {
               <div className="flex items-center gap-4">
                 <Dialog open={isNewGameDialogOpen} onOpenChange={setIsNewGameDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button size="lg" variant="outline">
+                    <Button size="lg">
                       <PlusCircle className="mr-2 h-5 w-5" />
-                      New Offline Game
+                      New Game
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
                       <DialogTitle className="flex items-center gap-2 text-2xl">
-                        Set Up Offline Game
+                        Set Up New Game
                       </DialogTitle>
                       <DialogDescription>
-                        {user ? "Your game will be saved to your profile upon completion." : "Log in to save your game history."}
+                        Enter player names and a winning score to begin.
                       </DialogDescription>
                     </DialogHeader>
                     <NewGameForm startGame={handleGameStarted} />
                   </DialogContent>
                 </Dialog>
-                <Button size="lg" variant="outline" onClick={handleStartBotGame} disabled={isStartingBotGame}>
-                    {isStartingBotGame ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Bot className="mr-2 h-5 w-5" />}
-                    Play with Bots
-                </Button>
-                 <Link href="/online">
-                  <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                    <Gamepad2 className="mr-2 h-5 w-5" />
-                    Play Online
-                  </Button>
-                </Link>
                 <ThemeToggle />
-                {user ? <UserNav /> : <LoginButton />}
               </div>
             </header>
             
-            <PastGamesList />
+            <div className="text-center py-16 bg-secondary/50 rounded-lg">
+                <h2 className="text-2xl font-bold">Welcome to BridgeScore!</h2>
+                <p className="text-muted-foreground mt-2">The easiest way to keep score for your game of Bridge.</p>
+                <Button size="lg" className="mt-6" onClick={() => setIsNewGameDialogOpen(true)}>
+                    <PlusCircle className="mr-2 h-5 w-5" />
+                    Start a New Game
+                </Button>
+            </div>
           </div>
         )}
       </div>

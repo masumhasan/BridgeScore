@@ -2,13 +2,12 @@
 
 import { useReducer, useEffect, useCallback, useRef } from 'react';
 import type { GameState, Player, GamePhase } from '@/types/game';
-import { saveGameResult } from '@/services/gameService';
 
 const LOCAL_STORAGE_KEY = 'bridgeScore_gameState';
 const TOTAL_ROUNDS = 10;
 
 type Action =
-  | { type: 'START_GAME'; payload: { players: string[]; winningScore: number; tag?: string; hostId?: string, hostName?: string | null, hostPhotoURL?: string | null } }
+  | { type: 'START_GAME'; payload: { players: string[]; winningScore: number; tag?: string; } }
   | { type: 'SET_CALLS'; payload: number[] }
   | { type: 'SET_MADE'; payload: number[] }
   | { type: 'SET_OUTCOMES'; payload: ('won' | 'lost')[] }
@@ -33,20 +32,26 @@ const finishRound = (state: GameState, updatedPlayers: Player[]): GameState => {
   
   const nextPhase: GamePhase = isGameOver ? 'finished' : (nextRound === 1 ? 'making' : 'calling');
 
-  return {
+  const finishedState: GameState = {
     ...state,
     players: updatedPlayers,
     round: nextRound,
     dealerIndex: (state.dealerIndex + 1) % state.players.length,
     phase: nextPhase,
   };
+
+  if (isGameOver) {
+      finishedState.finishedAt = new Date().toISOString();
+  }
+
+  return finishedState;
 };
 
 
 const gameReducer = (state: GameState, action: Action): GameState => {
   switch (action.type) {
     case 'START_GAME': {
-      const { players, winningScore, tag, hostId, hostName, hostPhotoURL } = action.payload;
+      const { players, winningScore, tag } = action.payload;
       const newPlayers: Player[] = players.map((name, index) => ({
         id: `player-${index + 1}`,
         name,
@@ -65,9 +70,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         isGameActive: true,
         totalRounds: TOTAL_ROUNDS,
         winningScore,
-        hostId,
-        hostName: hostName ?? undefined,
-        hostPhotoURL: hostPhotoURL ?? undefined,
       };
     }
     case 'SET_CALLS': {
@@ -170,21 +172,15 @@ export const useGame = () => {
   useEffect(() => {
     if (gameState.isGameActive) {
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(gameState));
-      
-      // Save to Firebase when game transitions to 'finished' and has a hostId (is not private)
-      if (prevStateRef.current?.phase !== 'finished' && gameState.phase === 'finished' && gameState.hostId) {
-        saveGameResult(gameState);
-      }
     } else {
       localStorage.removeItem(LOCAL_STORAGE_KEY);
     }
-    // Update ref to current state for next render
     prevStateRef.current = gameState;
   }, [gameState]);
 
 
-  const startGame = useCallback((players: string[], winningScore: number, tag?: string, hostId?: string, hostName?: string | null, hostPhotoURL?: string | null) => {
-    dispatch({ type: 'START_GAME', payload: { players, winningScore, tag, hostId, hostName, hostPhotoURL } });
+  const startGame = useCallback((players: string[], winningScore: number, tag?: string) => {
+    dispatch({ type: 'START_GAME', payload: { players, winningScore, tag } });
   }, []);
 
   const setCalls = useCallback((calls: number[]) => {
