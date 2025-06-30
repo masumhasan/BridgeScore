@@ -1,0 +1,9 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/favicon.ico/route": "/favicon.ico",
+  "/login/page": "/login",
+  "/online/game/[gameId]/page": "/online/game/[gameId]",
+  "/online/page": "/online",
+  "/page": "/",
+  "/profile/[userId]/page": "/profile/[userId]"
+}
