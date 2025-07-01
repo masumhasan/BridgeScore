@@ -91,7 +91,7 @@ export default function Home() {
         <Toaster />
       </main>
       <footer className="text-center p-4 text-muted-foreground text-sm border-t">
-        © {new Date().getFullYear()} <a href="https://masumhasan.github.io" target="_blank" rel="noopener noreferrer" className="underline hover:text-accent">Masum Hasan</a>. All Rights Reserved.
+        © {new Date().getFullYear()} <a href="https://masumhasan.github.io" target="_blank" rel="noopener noreferrer" className="underline hover:text-accent">Nur Hasan Masum</a>. All Rights Reserved.
       </footer>
     </div>
   );

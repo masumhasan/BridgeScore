@@ -2881,7 +2881,7 @@ function Home() {
                         target: "_blank",
                         rel: "noopener noreferrer",
                         className: "underline hover:text-accent",
-                        children: "Masum Hasan"
+                        children: "Nur Hasan Masum"
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
                         lineNumber: 94,
