@@ -41,53 +41,58 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-background text-foreground font-body">
-      <div className="container mx-auto p-4 md:p-8">
-        {gameState.isGameActive ? (
-          <GameScreen gameState={gameState} {...gameActions} />
-        ) : (
-          <div className="space-y-8">
-            <header className="flex flex-col sm:flex-row justify-between items-center gap-4 border-b pb-6">
-              <div className="flex items-center gap-3">
-                <Spade className="w-8 h-8 text-primary" />
-                <h1 className="text-3xl font-bold text-primary">BridgeScore</h1>
-              </div>
-              <div className="flex items-center gap-4">
-                <Dialog open={isNewGameDialogOpen} onOpenChange={setIsNewGameDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button size="lg">
+    <div className="flex flex-col min-h-screen bg-background">
+      <main className="flex-grow text-foreground font-body">
+        <div className="container mx-auto p-4 md:p-8">
+          {gameState.isGameActive ? (
+            <GameScreen gameState={gameState} {...gameActions} />
+          ) : (
+            <div className="space-y-8">
+              <header className="flex flex-col sm:flex-row justify-between items-center gap-4 border-b pb-6">
+                <div className="flex items-center gap-3">
+                  <Spade className="w-8 h-8 text-primary" />
+                  <h1 className="text-3xl font-bold text-primary">BridgeScore</h1>
+                </div>
+                <div className="flex items-center gap-4">
+                  <Dialog open={isNewGameDialogOpen} onOpenChange={setIsNewGameDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="lg">
+                        <PlusCircle className="mr-2 h-5 w-5" />
+                        New Game
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-2xl">
+                          Set Up New Game
+                        </DialogTitle>
+                        <DialogDescription>
+                          Enter player names and a winning score to begin.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <NewGameForm startGame={handleGameStarted} />
+                    </DialogContent>
+                  </Dialog>
+                  <ThemeToggle />
+                </div>
+              </header>
+              
+              <div className="text-center py-16 bg-secondary/50 rounded-lg">
+                  <h2 className="text-2xl font-bold">Welcome to BridgeScore!</h2>
+                  <p className="text-muted-foreground mt-2">The easiest way to keep score for your game of Bridge.</p>
+                  <Button size="lg" className="mt-6" onClick={() => setIsNewGameDialogOpen(true)}>
                       <PlusCircle className="mr-2 h-5 w-5" />
-                      New Game
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                      <DialogTitle className="flex items-center gap-2 text-2xl">
-                        Set Up New Game
-                      </DialogTitle>
-                      <DialogDescription>
-                        Enter player names and a winning score to begin.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <NewGameForm startGame={handleGameStarted} />
-                  </DialogContent>
-                </Dialog>
-                <ThemeToggle />
+                      Start a New Game
+                  </Button>
               </div>
-            </header>
-            
-            <div className="text-center py-16 bg-secondary/50 rounded-lg">
-                <h2 className="text-2xl font-bold">Welcome to BridgeScore!</h2>
-                <p className="text-muted-foreground mt-2">The easiest way to keep score for your game of Bridge.</p>
-                <Button size="lg" className="mt-6" onClick={() => setIsNewGameDialogOpen(true)}>
-                    <PlusCircle className="mr-2 h-5 w-5" />
-                    Start a New Game
-                </Button>
             </div>
-          </div>
-        )}
-      </div>
-      <Toaster />
-    </main>
+          )}
+        </div>
+        <Toaster />
+      </main>
+      <footer className="text-center p-4 text-muted-foreground text-sm border-t">
+        © {new Date().getFullYear()} <a href="https://masumhasan.github.io" target="_blank" rel="noopener noreferrer" className="underline hover:text-accent">Masum Hasan</a>. All Rights Reserved.
+      </footer>
+    </div>
   );
 }
