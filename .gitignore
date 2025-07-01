@@ -26,3 +26,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+.next/cache/webpack/server-production/0.pack
+.next/cache/webpack/client-production/0.pack
+.firebase/bridgescore-app/functions/node_modules/@next/swc-linux-x64-gnu/next-swc.linux-x64-gnu.node
+.firebase/bridgescore-app/functions/node_modules/@next/swc-linux-x64-musl/next-swc.linux-x64-musl.node
