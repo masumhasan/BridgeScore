@@ -31,3 +31,6 @@ pnpm-debug.log*
 .next/cache/webpack/client-production/0.pack
 .firebase/bridgescore-app/functions/node_modules/@next/swc-linux-x64-gnu/next-swc.linux-x64-gnu.node
 .firebase/bridgescore-app/functions/node_modules/@next/swc-linux-x64-musl/next-swc.linux-x64-musl.node
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
